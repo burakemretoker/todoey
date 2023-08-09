@@ -32,7 +32,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" id="NNt-sG-GOX">
-                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="add" id="ah5-Wk-vQX">
+                        <barButtonItem key="rightBarButtonItem" style="done" systemItem="add" id="ah5-Wk-vQX">
                             <color key="tintColor" systemColor="systemGray4Color"/>
                             <connections>
                                 <action selector="addButtonPressed:" destination="dPW-Ti-neX" id="vxH-P8-O4B"/>

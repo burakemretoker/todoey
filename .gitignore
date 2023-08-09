@@ -1,0 +1,113 @@
+Last login: Sun Aug  6 14:00:41 on ttys001
+burakemretoker@Buraks-MacBook-Air-2 Todoey % ls -a
+.			.DS_Store		Todoey.xcodeproj
+..			Todoey
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git init
+Initialized empty Git repository in /Users/burakemretoker/Documents/iOS Development/Todoey/.git/
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git add .
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git status
+On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+	new file:   .DS_Store
+	new file:   Todoey.xcodeproj/project.pbxproj
+	new file:   Todoey.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+	new file:   Todoey.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+	new file:   Todoey.xcodeproj/project.xcworkspace/xcuserdata/burakemretoker.xcuserdatad/UserInterfaceState.xcuserstate
+	new file:   Todoey.xcodeproj/xcuserdata/burakemretoker.xcuserdatad/xcschemes/xcschememanagement.plist
+	new file:   Todoey/AppDelegate.swift
+	new file:   Todoey/Assets.xcassets/AccentColor.colorset/Contents.json
+	new file:   Todoey/Assets.xcassets/AppIcon.appiconset/Contents.json
+	new file:   Todoey/Assets.xcassets/Contents.json
+	new file:   Todoey/Base.lproj/LaunchScreen.storyboard
+	new file:   Todoey/Base.lproj/Main.storyboard
+	new file:   Todoey/Info.plist
+	new file:   Todoey/SceneDelegate.swift
+	new file:   Todoey/ViewController.swift
+
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git commit -m "Create Todoey Project""
+dquote> :q!
+dquote>
+dquote> :q
+dquote> exit
+dquote> q
+dquote>
+burakemretoker@Buraks-MacBook-Air-2 Todoey % it commit -m "Create Todoey Project"
+zsh: command not found: it
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git commit -m "Create Todoey Project"
+[main (root-commit) b88d86e] Create Todoey Project
+ 15 files changed, 712 insertions(+)
+ create mode 100644 .DS_Store
+ create mode 100644 Todoey.xcodeproj/project.pbxproj
+ create mode 100644 Todoey.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+ create mode 100644 Todoey.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+ create mode 100644 Todoey.xcodeproj/project.xcworkspace/xcuserdata/burakemretoker.xcuserdatad/UserInterfaceState.xcuserstate
+ create mode 100644 Todoey.xcodeproj/xcuserdata/burakemretoker.xcuserdatad/xcschemes/xcschememanagement.plist
+ create mode 100644 Todoey/AppDelegate.swift
+ create mode 100644 Todoey/Assets.xcassets/AccentColor.colorset/Contents.json
+ create mode 100644 Todoey/Assets.xcassets/AppIcon.appiconset/Contents.json
+ create mode 100644 Todoey/Assets.xcassets/Contents.json
+ create mode 100644 Todoey/Base.lproj/LaunchScreen.storyboard
+ create mode 100644 Todoey/Base.lproj/Main.storyboard
+ create mode 100644 Todoey/Info.plist
+ create mode 100644 Todoey/SceneDelegate.swift
+ create mode 100644 Todoey/ViewController.swift
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git remote add origin https://github.com/burakemretoker/todoey.git
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git push -u origin main
+To https://github.com/burakemretoker/todoey.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/burakemretoker/todoey.git'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git pull https://github.com/burakemretoker/todoey.git
+remote: Enumerating objects: 3, done.
+remote: Counting objects: 100% (3/3), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (3/3), 1.53 KiB | 390.00 KiB/s, done.
+From https://github.com/burakemretoker/todoey
+ * branch            HEAD       -> FETCH_HEAD
+hint: You have divergent branches and need to specify how to reconcile them.
+hint: You can do so by running one of the following commands sometime before
+hint: your next pull:
+hint:
+hint:   git config pull.rebase false  # merge
+hint:   git config pull.rebase true   # rebase
+hint:   git config pull.ff only       # fast-forward only
+hint:
+hint: You can replace "git config" with "git config --global" to set a default
+hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+hint: or --ff-only on the command line to override the configured default per
+hint: invocation.
+fatal: Need to specify how to reconcile divergent branches.
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git push -u origin main
+To https://github.com/burakemretoker/todoey.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/burakemretoker/todoey.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+burakemretoker@Buraks-MacBook-Air-2 Todoey % git push --force origin main
+Enumerating objects: 30, done.
+Counting objects: 100% (30/30), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (27/27), done.
+Writing objects: 100% (30/30), 20.95 KiB | 6.98 MiB/s, done.
+Total 30 (delta 2), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (2/2), done.
+To https://github.com/burakemretoker/todoey.git
+ + d648c48...b88d86e main -> main (forced update)
+burakemretoker@Buraks-MacBook-Air-2 Todoey % mkdir .gitignore
+burakemretoker@Buraks-MacBook-Air-2 Todoey % open .gitignore
+burakemretoker@Buraks-MacBook-Air-2 Todoey % rm .gitigonre
+rm: .gitigonre: No such file or directory
+burakemretoker@Buraks-MacBook-Air-2 Todoey % rm .gitignore
+rm: .gitignore: is a directory
+burakemretoker@Buraks-MacBook-Air-2 Todoey %
