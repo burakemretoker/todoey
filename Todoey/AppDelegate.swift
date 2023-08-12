@@ -53,6 +53,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     // MARK: - Core Data stack
 
+    
+    // we want to use "lazy" and this can only used with function, the code below is a function that have special syntax
     lazy var persistentContainer: NSPersistentContainer = {
         /*
          The persistent container for the application. This implementation

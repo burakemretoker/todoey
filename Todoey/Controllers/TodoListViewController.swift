@@ -6,32 +6,30 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
-    var itemsArray = [Item]()
+    var itemsArray: [Item] = []
     //    var defaults = UserDefaults.standard
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathExtension("Items.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    var selectedCategory: Category? {
+        // works if only selectedCategory has set with value.
+        didSet {
+            loadItems()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         print("The Data File Path: \(dataFilePath!)")
-        
-        let newItem1 = Item()
-        newItem1.title = "Find Mike"
-        itemsArray.append(newItem1)
-        
-        let newItem2 = Item()
-        newItem2.title = "Buy Eggos"
-        itemsArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "Destroy Demogorgon"
-        itemsArray.append(newItem3)
-        
-        loadItems()
+//        searchBar.delegate = self
+        self.title = "Todoey"
+        UINavigationBar.appearance().barTintColor = #colorLiteral(red: 0.5568627715, green: 0.3529411852, blue: 0.9686274529, alpha: 1)
+//        loadItems()
         
         //        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
         //            itemsArray = items
@@ -52,7 +50,6 @@ class TodoListViewController: UITableViewController {
         
         let item = itemsArray[indexPath.row]
         
-        
         cell.textLabel?.text = item.title
         
         //        if item.done == true {
@@ -63,7 +60,6 @@ class TodoListViewController: UITableViewController {
         
         // There is even further easy implementation of this as "Ternary":
         cell.accessoryType = item.done == true ? .checkmark : .none
-        
         
         return cell
         
@@ -80,15 +76,30 @@ class TodoListViewController: UITableViewController {
         //        }
         
         // instead :
-        itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
+//        itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
+        
+        
+        // This line for delete from coreData --> for context (temprorary area. )
+//        context.delete(itemsArray[indexPath.row])
+        
+        // This line for remove from itemsArray, nothing to do with CoreData
+//        itemsArray.remove(at: indexPath.row)
+
+        // Notice the order "context.delete" and "itemsArray.remove"
+        
         
         // We call it whenever we want to save file, also in here.
+        
+        tableView.reloadData()
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        
         self.saveItems()
         
-        tableView.deselectRow(at: indexPath, animated: true)
-        tableView.reloadData()
-        
     }
+    
+    
+    //MARK: - Button Bar Pressed
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
@@ -102,8 +113,10 @@ class TodoListViewController: UITableViewController {
             //            self.defaults.set(self.itemsArray, forKey: "TodoListArray")
             
             // Adding data to our system and reloading data.
-            let newItem = Item()
+            let newItem = Item(context: self.context)
             newItem.title = textField.text!
+            newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemsArray.append(newItem)
             
             // We call it whenever to save file.
@@ -118,32 +131,106 @@ class TodoListViewController: UITableViewController {
         }
         
         alert.addAction(action)
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
         present(alert, animated: true)
+        
     }
     
     // This is the method to we able to save our data into the .plist file.
+    
+    //MARK: - Data Manipulation Methods (CRUD)
+    
     func saveItems() {
-        let encoder = PropertyListEncoder()
         
         do {
-            let data = try encoder.encode(self.itemsArray)
-            try data.write(to: self.dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding itemArray: \(error)")
+            print("Error saving context: \(error)")
         }
-    }
-    
-    func loadItems() {
-        let decoder = PropertyListDecoder()
         
-        do {
-            let data = try Data(contentsOf: dataFilePath!)
-            itemsArray = try decoder.decode([Item].self, from: data)
-        } catch {
-            print("Error decodind itemArray: \(error)")
-        }
+        /* itemsArray[indexPath.row].setValue() diye bir method var ancak bunla update ettiğinde bile
+         
+        */
+        
+        // we don't use the code above anymore becaue, we don't need encoder or decoder
+//        let encoder = PropertyListEncoder()
+//
+//        do {
+//            let data = try encoder.encode(self.itemsArray)
+//            try data.write(to: self.dataFilePath!)
+//        } catch {
+//            print("Error encoding itemArray: \(error)")
+//        }
     }
     
+    
+    // load with Decoder and
+//    func loadItems() {
+//        let decoder = PropertyListDecoder()
+//
+//        do {
+//            let data = try Data(contentsOf: dataFilePath!)
+//            itemsArray = try decoder.decode([Item].self, from: data)
+//        } catch {
+//            print("Error decodind itemArray: \(error)")
+//        }
+//    }
+    
+    
+    //load with CoreData
+    
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        // Normally Swift is clever enought to specify the datatype but now we should specify, espacially for the entitiy name (Item).
+        // we don't reinitalize request because we initilazed it as parameter.
+//        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        // remember we did create additional predicates to code won't conflict with each other because in search bar we have also NSPredicate.
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate])
+        }
+
+        do {
+            itemsArray = try context.fetch(request)
+        } catch {
+            print("Encountered Error trying to fetch data: \(error) ")
+        }
+        tableView.reloadData()
+    }
     
 }
 
+//MARK: - Search Bar Delegate
+extension TodoListViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.predicate = predicate
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request, predicate: predicate)
+        
+    
+    }
+    
+    // This method triggered only if searchBar changes.
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            // Search Bar pass its first status
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+
+        }
+    }
+    
+}
