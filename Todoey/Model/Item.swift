@@ -2,16 +2,15 @@
 //  Item.swift
 //  Todoey
 //
-//  Created by Burak Emre Toker on 8.08.2023.
+//  Created by Burak Emre Toker on 14.08.2023.
 //
 
-//import Foundation
-//
-//
-//// To be encodable, should include standart dataType!
-//class Item: Codable {
-//    var title: String = ""
-//    var done: Bool = false
-//}
+import Foundation
+import RealmSwift
 
-// We don't need that anymore.
+class Item: Object {
+    @objc dynamic var title: String = ""
+    @objc dynamic var done: Bool = false
+    // inverse relationship with Category as parentCategory
+    var parentCategory = LinkingObjects(fromType: Category.self, property: "items")
+}
