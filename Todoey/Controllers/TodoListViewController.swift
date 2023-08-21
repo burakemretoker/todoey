@@ -7,14 +7,17 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class TodoListViewController: UITableViewController {
+
+class TodoListViewController: SwipeTableViewController {
     
     //    var defaults = UserDefaults.standard
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathExtension("Items.plist")
     let realm = try! Realm()
     var todoItems: Results<Item>?
     
+    
+    // this is optional because otherwise u will get an error. init error
     var selectedCategory: Category? {
         // works if only selectedCategory has set with value.
         didSet {
@@ -24,14 +27,22 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.rowHeight = 80.0
         // Do any additional setup after loading the view.
-        print("The Data File Path: \(dataFilePath!)")
         //        searchBar.delegate = self
         self.title = "Todoey"
-        UINavigationBar.appearance().barTintColor = #colorLiteral(red: 0.5568627715, green: 0.3529411852, blue: 0.9686274529, alpha: 1)
         //        loadItems()
         
-        
+    }
+    
+    // The reason why we use WillAppear method is view's loading is not enough for navigationController set up.
+    override func viewWillAppear(_ animated: Bool) {
+        if let colorHex = selectedCategory?.color {
+            guard let navBar = navigationController?.navigationBar else {fatalError("Navigation Controller does not exist")}
+            // in iOS 13 this is new
+            navBar.backgroundColor = UIColor(hexString: colorHex)
+            title = selectedCategory!.name
+        }
     }
     
     
@@ -41,7 +52,8 @@ class TodoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
@@ -53,11 +65,24 @@ class TodoListViewController: UITableViewController {
             //        }
             
             // There is even further easy implementation of this as "Ternary":
-            cell.accessoryType = item.done == true ? .checkmark : .none
+            cell.accessoryType = item.done == true ? .checkmark: .none
+            
         } else {
             cell.textLabel?.text = "No Items In It"
         }
         
+        if let currentCategoryColor = selectedCategory?.color {
+            if let color = UIColor(hexString: currentCategoryColor)?.lighten(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+                
+            }
+        }
+        
+        
+        cell.layer.borderWidth = cell.frame.width * 0.005
+        cell.layer.borderColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        cell.layer.cornerRadius = cell.frame.height / 5
         
         return cell
         
@@ -66,32 +91,16 @@ class TodoListViewController: UITableViewController {
     //MARK: - Table View Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        
-        //        if itemsArray[indexPath.row].done == false {
-        //            itemsArray[indexPath.row].done = true
-        //        } else {
-        //            itemsArray[indexPath.row].done = false
-        //        }
-        
-        // instead :
-        //        itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
-        
-        
-        // This line for delete from coreData --> for context (temprorary area. )
-        //        context.delete(itemsArray[indexPath.row])
-        
-        // This line for remove from itemsArray, nothing to do with CoreData
-        //        itemsArray.remove(at: indexPath.row)
-        
-        // Notice the order "context.delete" and "itemsArray.remove"
-        
-        
-        // We call it whenever we want to save file, also in here.
-        
-        //        todoItems?[indexPath.row].done = !todoItems[indexPath.row].done
-        //        self.saveItems()
-        
-        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write{
+                    item.done = !item.done
+                }
+            } catch {
+                print("Encountered with an error when updating item.done: \(error)")
+            }
+        }
+
         tableView.deselectRow(at: indexPath, animated: true)
         tableView.reloadData()
         
@@ -111,19 +120,20 @@ class TodoListViewController: UITableViewController {
             
             if let currentCategory = self.selectedCategory {
                 do {
+                    // and actually we saving the items as this.b
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textField.text!
-                        print("herreeee\(newItem.title)")
+                        newItem.dateCreated = Date()
+                        
+                        // don't confuse it with in CategoryVC. we append newItem to the relationship.
                         currentCategory.items.append(newItem)
                     }
                 } catch {
                     print("Error saving new items: \(error)")
                 }
-                print("hi thereee2")
             }
-            print("hi thereee3")
-            print(self.selectedCategory?.items)
+            
             self.tableView.reloadData()
         }
         
@@ -145,7 +155,7 @@ class TodoListViewController: UITableViewController {
     //MARK: - Data Manipulation Methods (CRUD)
     
     func saveItems(item: Item) {
-        
+        // notice that we do not need to saveItems method in order to save items in textField.
         do {
             try realm.write {
                 realm.add(item)
@@ -155,36 +165,48 @@ class TodoListViewController: UITableViewController {
         }
     }
     
-        //load with CoreData
+    //load with CoreData
+    
+    func loadItems() {
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
-        func loadItems() {
-            todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
+        tableView.reloadData()
+    }
+    
+    
+    
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try self.realm.write{
+                    self.realm.delete(item)
+                }
+            } catch {
+                print("Error While Deleting Item \(error).")
+            }
             
-            tableView.reloadData()
+            
         }
         
     }
-
+}
 
 //MARK: - Search Bar Delegate
 extension TodoListViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
-//        let request: NSFetchRequest<Item> = Item.fetchRequest()
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//        request.predicate = predicate
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        loadItems(with: request, predicate: predicate)
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!)
+            .sorted(byKeyPath:"dateCreated", ascending: true)
         
-    
+        tableView.reloadData()
     }
     
     // This method triggered only if searchBar changes.
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
-//            loadItems()
+            loadItems()
 //
             // Search Bar pass its first status
             

@@ -10,21 +10,30 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
-    
+
+class CategoryViewController: SwipeTableViewController {
     // We're implementing this second time, so it's secure to forcly try.
-    let realm = try! Realm()
-    
+     let realm = try! Realm()
+    var selectedIndexPath = IndexPath()
     //
     var categoryArray: Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        tableView.rowHeight = 80.0
         loadCategories()
     }
 
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let navBar = navigationController?.navigationBar {
+            navBar.backgroundColor = FlatSkyBlue()
+            
+        }
+    }
+    
     //MARK: - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -32,9 +41,17 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "goToItems", for: indexPath)
         
-        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Category In It"
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
+        let currentColor = categoryArray?[indexPath.row].color ?? "FFFFFF"
+        cell.backgroundColor = UIColor(hexString: currentColor)
+        
+        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categories Added Yet."
+        cell.layer.borderWidth = cell.frame.width * 0.005
+        cell.layer.borderColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        cell.layer.cornerRadius = cell.frame.height / 5
+        cell.textLabel?.textColor = ContrastColorOf(UIColor(hexString: currentColor)!, returnFlat: true)
         
         return cell
     }
@@ -45,17 +62,21 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
+        selectedIndexPath = indexPath
         performSegue(withIdentifier: "goToItemsSegue", sender: self)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! TodoListViewController
-        if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categoryArray?[indexPath.row]
-//            if categoryArray != nil {
-//                destinationVC.selectedCategory = categoryArray![indexPath.row]
-//            }
-        }
+//        print(tableView.indexPathForSelectedRow)
+//        if let indexPath = tableView.indexPathForSelectedRow {
+//            print("tableView.indexPathForSelectedRow \(indexPath.row)")
+//            destinationVC.selectedCategory = categoryArray?[indexPath.row]
+////            if categoryArray != nil {
+////                destinationVC.selectedCategory = categoryArray![indexPath.row]
+////            }
+//        }
+        destinationVC.selectedCategory = categoryArray?[selectedIndexPath.row]
     }
     
     //MARK: - Data Manipulation Methods (CRUD)
@@ -88,6 +109,8 @@ class CategoryViewController: UITableViewController {
             
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.color = UIColor.randomFlat().hexValue()
+            // we don't need to append newCategory to the array.
             self.save(category: newCategory)
             
             self.tableView.reloadData()
@@ -105,104 +128,58 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true)
     }
     
+    override func updateModel(at indexPath: IndexPath) {
+        
+        do {
+            try self.realm.write {
+                guard let categoryItem = self.categoryArray?[indexPath.row] else {
+                    print("Item could not be deleted since it's nil.")
+                    return
+                }
+                self.realm.delete(self.categoryArray![indexPath.row])
+                print("Item is Deleted.")
+            }
+        } catch {
+            print("Error when SwipeTableViewCellDelegate \(error)")
+        }
+    }
     
     
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Uncomment the following line to preserve selection between presentations
-// self.clearsSelectionOnViewWillAppear = false
-
-// Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-// self.navigationItem.rightBarButtonItem = self.editButtonItem
-//}
 //
-//// MARK: - Table view data source
+//extension CategoryViewController: SwipeTableViewCellDelegate {
+//    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+//        guard orientation == .right else { return nil }
 //
-//override func numberOfSections(in tableView: UITableView) -> Int {
-//// #warning Incomplete implementation, return the number of sections
-//return 0
-//}
+//        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+//            do {
+//                try self.realm.write {
+//                    guard let categoryItem = self.categoryArray?[indexPath.row] else {
+//                        print("Item could not be deleted since it's nil.")
+//                        return
+//                    }
+//                    self.realm.delete(self.categoryArray![indexPath.row])
+//                    print("Item is Deleted.")
+//                }
+//            } catch {
+//                print("Error when SwipeTableViewCellDelegate \(error)")
+//            }
+//        }
 //
-//override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//// #warning Incomplete implementation, return the number of rows
-//return 0
-//}
-
-/*
-override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-// Configure the cell...
-
-return cell
-}
-*/
-
-/*
-// Override to support conditional editing of the table view.
-override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-// Return false if you do not want the specified item to be editable.
-return true
-}
-*/
-
-/*
-// Override to support editing the table view.
-override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-if editingStyle == .delete {
-    // Delete the row from the data source
-    tableView.deleteRows(at: [indexPath], with: .fade)
-} else if editingStyle == .insert {
-    // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-}
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-// Return false if you do not want the item to be re-orderable.
-return true
-}
-*/
-
-/*
-// MARK: - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-// Get the new view controller using segue.destination.
-// Pass the selected object to the new view controller.
-}
-*/
-
+//        // customize the action appearance
+//        deleteAction.image = UIImage(named: "delete-icon")
+//
+//        return [deleteAction]
+//    }
+//
+//    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+//        var options = SwipeOptions()
+//        options.expansionStyle = .destructive
+////        options.transitionStyle = .border
+//        return options
+//    }
+//
 //}
